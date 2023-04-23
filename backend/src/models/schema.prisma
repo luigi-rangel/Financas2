@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model Ticket {
+  parent Ticket? @relation("TicketParenting", fields: [parentId], references: [id], onDelete: Cascade)
+
+  id Int @id @default(autoincrement())
+  value Float
+  date DateTime @db.Date @default(now())
+  parentId Int?
+  action TicketType
+
+  children Ticket[] @relation("TicketParenting")
+  ticketTags TicketTag[]
+}
+
+model Tag {
+  parent Tag? @relation("TagParenting", fields: [parentId], references: [id])
+
+  id Int @id @default(autoincrement())
+  name String @unique
+  parentId Int?
+
+  children Tag[] @relation("TagParenting")
+  ticketTag TicketTag[]
+}
+
+model TicketTag {
+  ticketId Int
+  tagId Int
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([ticketId, tagId])
+}
+
+enum TicketType {
+  CALL
+  EXPENSE
+  INCOME
+}

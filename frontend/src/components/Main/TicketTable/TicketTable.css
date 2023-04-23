@@ -1,0 +1,17 @@
+#value {
+    max-width: 6em;
+}
+
+Table {
+    width: 55vw !important;
+}
+
+tbody tr>td:nth-child(4) {
+    display: flex;
+    justify-content: space-around;
+    width: 9em;
+}
+
+thead tr>th:nth-child(4) {
+    width: 9em;
+}

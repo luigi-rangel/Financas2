@@ -1,0 +1,15 @@
+#app {
+    display: flex;
+}
+
+h2 {
+    font-size: 2em;
+    padding-top: 0.15em;
+    font-weight: 500;
+    color: black;
+}
+
+h1 {
+    font-size: 3em;
+    padding-bottom: 0.1em;
+}

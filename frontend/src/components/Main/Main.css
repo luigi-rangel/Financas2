@@ -1,0 +1,52 @@
+.header {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0.9em;
+    padding-top: 0.9em;
+}
+
+.header input {
+    font-size: 2em;
+    font-weight: 500;
+    padding-left: 0.15em;
+    margin-left: 0.15em;
+    border-style: none;
+    max-width: 10.5em;
+}
+
+.header input:hover {
+    background-color: rgb(247, 247, 247);
+    border-radius: 2pt;
+    cursor: pointer;
+}
+
+.header>p {
+    margin: 0.2em 0.7em;
+    font-weight: bold;
+}
+
+.main {
+    max-height: 95vh;
+    overflow-y: scroll;
+    padding: 0 2em;
+    margin-top: 1em;
+    border: solid 0.05em black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+::-webkit-scrollbar {
+    width: 0.2em;
+    border-radius: 10px;
+  }
+
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 1px rgb(187, 187, 187);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: black;
+    border-radius: 10%;
+}
