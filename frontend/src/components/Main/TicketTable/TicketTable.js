@@ -8,23 +8,34 @@ import EditTicket from './EditTicket';
 const formatter = Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL'
-})
+});
+
+const monthDiff = (d1, d2) => {
+  let months = (d1.getFullYear() - d2.getFullYear()) * 12;
+  months += d1.getMonth();
+  months -= d2.getMonth();
+  return months < 0 ? 0 : months;
+}
 
 const TicketTable = (props) => {
-  const [tickets, setTickets] = useState([]);
   const [date, setDate] = useState(
     new Date(
       new Date().getFullYear(), 
       new Date().getMonth(), 
       new Date().getDate()
-    ).toISOString()
-    .substring(0, 10)
+    )
   );
+  const [baseDate, setBaseDate] = useState(date);
   const [tags, setTags] = useState('');
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState(-1);
+  const [repetitions, setRepetitions] = useState(1);
   
   const createButton = useRef();
+
+  const changeDate = date => {
+    setDate(date);
+  };
 
   const getTickets = () => {
     const dateEnd = new Date(
@@ -40,7 +51,7 @@ const TicketTable = (props) => {
       + '&dateEnd='
       + dateEnd.toISOString()
       ).then(res => {
-        setTickets(res.data.data);
+        props.setTickets(res.data.data);
       });
   };
 
@@ -59,10 +70,11 @@ const TicketTable = (props) => {
       });
     
     const ticket = {
-      date,
+      date: date.toISOString().substring(0, 10),
       tags: tags.split(' '),
       value,
-      action: props.action
+      action: props.action,
+      repetitions: repetitions
     };
 
     api.post('/tags', tagsArr)
@@ -82,6 +94,9 @@ const TicketTable = (props) => {
     const itemDate = new Date(item.date);
     itemDate.setDate(itemDate.getDate() + 1);
 
+    const repeatUntil = new Date(item.repeatUntil);
+    repeatUntil.setDate(repeatUntil.getDate() + 1);
+
     return (
       <>
       <td>{itemDate.toLocaleDateString()}</td>
@@ -93,7 +108,10 @@ const TicketTable = (props) => {
         }
       </td>
       <td>
-          <button 
+        {itemDate.toString() === repeatUntil.toString() ? '-' : repeatUntil.toLocaleDateString()}
+      </td>
+      <td>
+          <button
             onClick={() => {
               setEditId(item.id);
             }}
@@ -119,7 +137,18 @@ const TicketTable = (props) => {
         ) : viewRow(item)}
       </>
     );
-  }
+  };
+
+  useEffect(() => {
+    const newDate = new Date(baseDate.toISOString().substring(0, 10) + 'T03:00:00.000Z');
+    if(newDate.getDate() > 30 && [3, 5, 8, 10].includes(props.dateStart.getMonth())) {
+        newDate.setDate(30);
+    } else if (newDate.getDate() > 28 && (props.dateStart.getMonth()) === 1) {
+        newDate.setDate(28);
+    }
+    newDate.setMonth(props.dateStart.getMonth());
+    setBaseDate(newDate);
+  }, [props.dateStart]);
 
   useEffect(() => {
     getTickets();
@@ -141,11 +170,12 @@ const TicketTable = (props) => {
             <th>Data</th>
             <th>Valor</th>
             <th>Tags</th>
+            <th>Repetir até</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody>
-          {tickets.map((item, ind) => {
+          {props.tickets.map((item, ind) => {
             const itemDate = new Date(item.date);
             itemDate.setDate(itemDate.getDate() + 1);
 
@@ -159,8 +189,12 @@ const TicketTable = (props) => {
             <td>
               <input 
                 type="date" 
-                defaultValue={date}
-                onChange={event => setDate(event.target.value)}
+                value={baseDate.toISOString().substring(0, 10)}
+                onChange={event => {
+                    setDate(new Date(event.target.value));
+                    setBaseDate(new Date(event.target.value))
+                  }
+                }
               />
             </td>
             <td>
@@ -174,6 +208,22 @@ const TicketTable = (props) => {
               <input 
                 type="text"
                 onChange={event => setTags(event.target.value)}
+              />
+            </td>
+            <td>
+              <input 
+                type="month"
+                onChange={
+                  event => {
+                    const end = new Date(
+                      event.target.value.substring(0, 4),
+                      Number.parseInt(event.target.value.substring(5, 7)) + 1,
+                      -1
+                    );
+
+                    setRepetitions(monthDiff(end, date));
+                  }
+                }
               />
             </td>
             <td>

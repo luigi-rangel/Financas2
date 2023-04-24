@@ -52,12 +52,12 @@ const createTicket = async (ticket, tags) => {
 
 const getTickets = async filter => {
     try {
-        await prisma.$transaction(async tx => {
+        const ans = await prisma.$transaction(async tx => {
             const tickets = await tx.ticket.findMany({
                 where: {
                     date: {
-                        gte: new Date(filter.dateStart || '2000-01-01'),
-                        lte: new Date(filter.dateEnd || '2100-12-31'),
+                        gte: filter.dateStart,
+                        lte: filter.dateEnd,
                     },
                     action: filter.action,
                     ticketTags: filter.name ? {
@@ -85,50 +85,30 @@ const getTickets = async filter => {
                 }
             });
 
-            tickets.forEach(async e => {
+            for(i = 0; i < tickets.length; i++) {
                 const lastChild = await tx.ticket.aggregate({
                     where: {
-                        parentId: e.id
+                        OR: [
+                            tickets[i].parentId !== null ? {
+                                parentId: tickets[i].parentId
+                            } : { 
+                                parentId: tickets[i].id
+                            },
+                            {
+                                id: tickets[i].id
+                            }
+                        ]
                     },
                     _max: {
                         date: true
                     }
                 });
 
-                e.repeatUntil = lastChild.date;
-            })
-        })
-        const ans = await prisma.ticket.findMany({
-            where: {
-                date: {
-                    gte: new Date(filter.dateStart || '2000-01-01'),
-                    lte: new Date(filter.dateEnd || '2100-12-31'),
-                },
-                action: filter.action,
-                ticketTags: filter.name ? {
-                    some: {
-                        tag: {
-                            name: {
-                                contains: filter.name,
-                                mode: "insensitive"
-                            }
-                        }
-                    }
-                } : undefined
-            },
-            include: {
-                ticketTags: {
-                    select: {
-                        tag: true,
-                        tagId: false,
-                        ticketId: false
-                    }
-                }
-            },
-            orderBy: {
-                date: 'asc'
+                tickets[i].repeatUntil = lastChild._max.date;
             }
-        });
+
+            return tickets;
+        })
         return { status: "OK", data: ans };
     } catch (e) {
         return { stauts: "ERROR", error: e.message };
@@ -164,12 +144,6 @@ const updateTicket = async (id, data) => {
                         }
                     }
                 });
-
-                await tx.ticketTag.deleteMany({
-                    where: {
-                        ticketId: id
-                    }
-                });
             }
 
             const tickets = await tx.ticket.findMany({
@@ -190,7 +164,15 @@ const updateTicket = async (id, data) => {
             const ticketsIds = tickets.map(e => e.id);
 
             for (let ind in ticketsIds) {
-                const date = data.date ? _getShiftedDate(data.date, Number.parseInt(ind)) : undefined;
+                const date = data.date ? _getShiftedDate(data.date.substring(0, 10), Number.parseInt(ind)) : undefined;
+
+                if(data.tags) {
+                    await tx.ticketTag.deleteMany({
+                        where: {
+                            ticketId: ticketsIds[ind]
+                        }
+                    });
+                }
 
                 await tx.ticket.update({
                     where: {
@@ -201,9 +183,9 @@ const updateTicket = async (id, data) => {
                         date: date,
                         ticketTags: tagsIds ? {
                             createMany: {
-                                data: ids.map(e_1 => {
+                                data: tagsIds.map(e => {
                                     return {
-                                        tagId: e_1.id
+                                        tagId: e.id
                                     };
                                 })
                             }
@@ -219,20 +201,24 @@ const updateTicket = async (id, data) => {
     }
 };
 
-const getBalance = async (body, query) => {
+const getBalance = async (filter) => {
     let tickets;
     try {
         tickets = await prisma.ticket.findMany({
             where: {
-                action: query?.action,
+                action: filter.action,
                 ticketTags: {
                     some: {
                         tag: {
                             name: {
-                                in: body.tags
+                                in: filter.tags
                             }
                         }
                     }
+                },
+                date: {
+                    gte: filter.dateStart,
+                    lte: filter.dateEnd
                 }
             }
         });
@@ -241,17 +227,17 @@ const getBalance = async (body, query) => {
     }
 
     return {status: "OK", balance: tickets.reduce((acc, cur) => {
-        if(new Date(cur.date) < new Date(query.dateStart)) return acc;
+        if(filter.action === "EXPENSE" || filter.action === "CALL") return acc + cur.value
         return acc + (cur.action === "INCOME" ? 1 : -1)  * cur.value
     }, 0)};
 };
 
 const _getShiftedDate = (start, rep) => {
-    const date = new Date(start);
-    if(date.getDate() > 29 && [3, 5, 8, 10].includes(date.getMonth() + rep)) {
-        date.setDate(29);
-    } else if (date.getDate() > 27 && (date.getMonth() + rep) === 1) {
-        date.setDate(27);
+    const date = new Date(start + ' 00:00:00.000');
+    if(date.getDate() > 30 && [3, 5, 8, 10].includes(date.getMonth() + rep)) {
+        date.setDate(30);
+    } else if (date.getDate() > 28 && (date.getMonth() + rep) === 1) {
+        date.setDate(28);
     }
     date.setMonth(date.getMonth() + rep);
 

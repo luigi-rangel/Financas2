@@ -16,7 +16,14 @@ const createTicket = async (req, res) => {
 };
 
 const getTickets = async (req, res) => {
-    const answer = await model.getTickets(req.query);
+    const filter = {
+        dateStart: new Date(req.query.dateStart || '2000-01-01'),
+        dateEnd: new Date(req.query.dateEnd || '2100-12-31'),
+        action: req.query.action,
+        name: req.query.name
+    };
+
+    const answer = await model.getTickets(filter);
     if (answer.status === "OK") return res.status(200).json(answer);
     return res.status(500).json(answer);
 };
@@ -34,7 +41,14 @@ const updateTicket = async (req, res) => {
 };
 
 const getBalance = async (req, res) => {
-    const answer = await model.getBalance(req.body, req.query);
+    const filter = {
+        action: req.query.action,
+        tags: req.body.tags,
+        dateStart: new Date(req.query.dateStart || '2000-01-01'),
+        dateEnd: new Date(req.query.dateEnd || '2100-12-31'),
+    };
+    
+    const answer = await model.getBalance(filter);
     if (answer.status === "OK") return res.status(200).json(answer);
     return res.status(500).json(answer);
 }

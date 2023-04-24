@@ -23,6 +23,12 @@
 .header>p {
     margin: 0.2em 0.7em;
     font-weight: bold;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+.header p:hover {
+    color: rgb(113, 113, 113);
 }
 
 .main {
@@ -38,15 +44,13 @@
 
 ::-webkit-scrollbar {
     width: 0.2em;
-    border-radius: 10px;
+    height: 0.2em;
   }
 
 ::-webkit-scrollbar-track {
     box-shadow: inset 0 0 1px rgb(187, 187, 187);
-    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: black;
-    border-radius: 10%;
 }

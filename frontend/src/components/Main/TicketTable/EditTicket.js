@@ -70,6 +70,9 @@ const EditTicket = (props) => {
             />
           </td>
           <td>
+            <input type="month" />
+          </td>
+          <td>
           <button 
             onClick={() => {
               props.setEditId(-1);
