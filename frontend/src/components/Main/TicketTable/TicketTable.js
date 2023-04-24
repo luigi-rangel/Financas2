@@ -25,7 +25,6 @@ const TicketTable = (props) => {
       new Date().getDate()
     )
   );
-  const [baseDate, setBaseDate] = useState(date);
   const [tags, setTags] = useState('');
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState(-1);
@@ -140,14 +139,14 @@ const TicketTable = (props) => {
   };
 
   useEffect(() => {
-    const newDate = new Date(baseDate.toISOString().substring(0, 10) + 'T03:00:00.000Z');
+    const newDate = new Date(date.toISOString().substring(0, 10) + 'T03:00:00.000Z');
     if(newDate.getDate() > 30 && [3, 5, 8, 10].includes(props.dateStart.getMonth())) {
         newDate.setDate(30);
     } else if (newDate.getDate() > 28 && (props.dateStart.getMonth()) === 1) {
         newDate.setDate(28);
     }
     newDate.setMonth(props.dateStart.getMonth());
-    setBaseDate(newDate);
+    setDate(newDate);
   }, [props.dateStart]);
 
   useEffect(() => {
@@ -189,10 +188,9 @@ const TicketTable = (props) => {
             <td>
               <input 
                 type="date" 
-                value={baseDate.toISOString().substring(0, 10)}
+                value={date.toISOString().substring(0, 10)}
                 onChange={event => {
-                    setDate(new Date(event.target.value));
-                    setBaseDate(new Date(event.target.value))
+                  setDate(new Date(event.target.value));
                   }
                 }
               />
