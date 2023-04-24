@@ -13,7 +13,7 @@ const Main = (props) => {
   const [title, setTitle] = useState('');
 
   const changeDate = date => {
-    props.setDateStart(new Date(date + '-01 03:0:00.000Z'));
+    props.setDateStart(new Date(date + '-01 00:00:00.000'));
   };
 
   useEffect(() => {

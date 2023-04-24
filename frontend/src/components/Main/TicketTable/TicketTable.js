@@ -32,10 +32,6 @@ const TicketTable = (props) => {
   
   const createButton = useRef();
 
-  const changeDate = date => {
-    setDate(date);
-  };
-
   const getTickets = () => {
     const dateEnd = new Date(
       props.dateStart.getFullYear(), 

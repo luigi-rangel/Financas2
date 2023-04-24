@@ -161,37 +161,71 @@ const updateTicket = async (id, data) => {
                     date: 'asc'
                 }
             });
+            if(!tickets.length) throw({ message: "id not found" });
+            
             const ticketsIds = tickets.map(e => e.id);
 
-            for (let ind in ticketsIds) {
-                const date = data.date ? _getShiftedDate(data.date.substring(0, 10), Number.parseInt(ind)) : undefined;
+            const baseDate = (data.date ? data.date : tickets[0].date.toISOString())
+            .substring(0, 10);
+
+            await tx.ticket.deleteMany({
+                where: {
+                    date: {
+                        gte: _getShiftedDate(baseDate, data.repetitions || tickets.length)
+                    },
+                    parentId: id
+                }
+            });
+
+            for (let i = 0; i < (data.repetitions || tickets.length); i++) {
+                const date = _getShiftedDate(baseDate, i);
 
                 if(data.tags) {
                     await tx.ticketTag.deleteMany({
                         where: {
-                            ticketId: ticketsIds[ind]
+                            ticketId: ticketsIds[i]
                         }
                     });
                 }
 
-                await tx.ticket.update({
-                    where: {
-                        id: ticketsIds[ind]
-                    },
-                    data: {
-                        value: data.value,
-                        date: date,
-                        ticketTags: tagsIds ? {
-                            createMany: {
-                                data: tagsIds.map(e => {
-                                    return {
-                                        tagId: e.id
-                                    };
-                                })
-                            }
-                        } : undefined
-                    }
-                });
+                if(i < ticketsIds.length) {
+                    await tx.ticket.update({
+                        where: {
+                            id: ticketsIds[i]
+                        },
+                        data: {
+                            value: data.value,
+                            date: date,
+                            ticketTags: tagsIds ? {
+                                createMany: {
+                                    data: tagsIds.map(e => {
+                                        return {
+                                            tagId: e.id
+                                        };
+                                    })
+                                }
+                            } : undefined
+                        }
+                    });
+                } else {
+                    await tx.ticket.create({
+                        data: {
+                            value: data.value || tickets[0].value,
+                            date: date,
+                            ticketTags: tagsIds ? {
+                                createMany: {
+                                    data: tagsIds.map(e => {
+                                        return {
+                                            tagId: e.id
+                                        };
+                                    })
+                                }
+                            } : undefined,
+                            parentId: id,
+                            action: tickets[0].action
+                        }
+                    })
+                }
             }
         });
 
@@ -232,6 +266,59 @@ const getBalance = async (filter) => {
     }, 0)};
 };
 
+const getSummary = async dateStart => {
+    const dateEnd = new Date(dateStart.getFullYear(), dateStart.getMonth() + 1, 0);
+
+    const filters = [
+        {
+            name: "currentBalance",
+            dateStart: new Date('2000-01-01'),
+            dateEnd: new Date()
+        },
+        {
+            name: "monthBalance",
+            dateStart,
+            dateEnd,
+        },
+        {
+            name: "monthExpenses",
+            dateStart,
+            dateEnd,
+            action: 'EXPENSE'
+        },
+        {
+            name: "monthIncome",
+            dateStart,
+            dateEnd,
+            action: 'INCOME'
+        },
+        {
+            name: "monthSavings",
+            dateStart,
+            dateEnd,
+            action: 'CALL'
+        }
+    ];
+
+    try{
+        const result = {
+            status: "OK", 
+            data: {}
+        };
+
+        for(let i = 0; i < filters.length; i++) {
+            const b = await getBalance(filters[i]);
+            if(b.status !== "OK") throw (b);
+
+            result.data[filters[i].name] = b.balance;
+        }
+
+        return result;
+    } catch(e) {
+        return {status: "ERROR", message: e.message};
+    }
+}
+
 const _getShiftedDate = (start, rep) => {
     const date = new Date(start + ' 00:00:00.000');
     if(date.getDate() > 30 && [3, 5, 8, 10].includes(date.getMonth() + rep)) {
@@ -242,12 +329,13 @@ const _getShiftedDate = (start, rep) => {
     date.setMonth(date.getMonth() + rep);
 
     return date;
-}
+};
 
 module.exports = {
     createTicket,
     getTickets,
     deleteTicket,
     updateTicket,
-    getBalance
+    getBalance,
+    getSummary
 }
