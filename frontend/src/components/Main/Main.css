@@ -11,7 +11,14 @@
     padding-left: 0.15em;
     margin-left: 0.15em;
     border-style: none;
+}
+
+.action {
     max-width: 10.5em;
+}
+
+.panel {
+    max-width: 3.1em;
 }
 
 .header input:hover {

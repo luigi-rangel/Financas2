@@ -2,12 +2,12 @@
     max-width: 6em;
 }
 
-tbody tr>td:nth-child(5) {
+.ticket-table-body tr>td:nth-child(5) {
     display: flex;
     justify-content: space-around;
     width: 9em;
 }
 
-tbody tr>td:nth-child(4) input{
+.ticket-table-body tr>td:nth-child(4) input{
     width: 10em;
 }

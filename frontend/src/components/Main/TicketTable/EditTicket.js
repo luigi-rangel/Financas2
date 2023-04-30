@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../../../services/api';
 
 const monthDiff = (d1, d2) => {
+  d2.setHours(d2.getHours() + 4);   
   console.log(d1.toISOString(), d2.toISOString());
 
   let months = (d1.getFullYear() - d2.getFullYear()) * 12;
@@ -14,7 +15,7 @@ const EditTicket = (props) => {
   const [editDate, setEditDate] = useState(new Date(props.item.date));
   const [editEndDate, setEditEndDate] = useState(new Date(
     props.item.repeatUntil.substring(0, 4),
-    Number.parseInt(props.item.repeatUntil.substring(5, 7)) + 1,
+    Number.parseInt(props.item.repeatUntil.substring(5, 7)),
     -1
   ));
   const [editValue, setEditValue] = useState(0);
@@ -43,8 +44,9 @@ const EditTicket = (props) => {
         date: editDate,
         tags: editTags ? editTags.split(' ') : undefined,
         value: editValue ? editValue : undefined,
-        repetitions: repetitions > 0 ? repetitions : 1
+        repetitions: repetitions > 0 ? repetitions + 1 : 1
       };
+      console.log(ticket.repetitions);
       
       if(editTags) {
       api.post('/tags', tagsArr)
@@ -58,7 +60,7 @@ const EditTicket = (props) => {
       setEditDate(new Date(0));
       setEditEndDate(new Date(
         props.item.repeatUntil.substring(0, 4),
-        Number.parseInt(props.item.repeatUntil.substring(5, 7)) + 1,
+        Number.parseInt(props.item.repeatUntil.substring(5, 7)),
         -1
       ));
       setEditValue(0);
@@ -101,7 +103,7 @@ const EditTicket = (props) => {
               onChange={event => {
                 const end = new Date(
                   event.target.value.substring(0, 4),
-                  Number.parseInt(event.target.value.substring(5, 7)) + 1,
+                  Number.parseInt(event.target.value.substring(5)),
                   -1
                 );
 

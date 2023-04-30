@@ -9,7 +9,7 @@ import Card from './components/Card/Card';
 const today = new Date();
 
 function App() {
-  const [action, setAction] = useState('EXPENSE');
+  const [tab, setTab] = useState('PANEL');
   const [tickets, setTickets] = useState([]);
   const [dateStart, setDateStart] = useState(
     new Date(
@@ -18,18 +18,17 @@ function App() {
     )
   );
 
-  const changeAction = action => {
-    setAction(action);
+  const changeTab = tab => {
+    setTab(tab)
   };
 
   return (
     <div id='app'>
       <NavBar 
-        changeAction={changeAction} 
-        action={action}
+        changeTab={changeTab}
       />
       <Main 
-        action={action} 
+        tab={tab} 
         dateStart={dateStart} 
         setDateStart={setDateStart} 
         tickets={tickets} 

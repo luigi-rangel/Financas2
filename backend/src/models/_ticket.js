@@ -131,10 +131,24 @@ const deleteTicket = async id => {
 const updateTicket = async (id, data) => {
     try {
         await prisma.$transaction(async (tx) => {
-            let tagsIds;
+            let newTagsIds;
+
+            newTagsIds = await tx.ticketTag.findMany({
+                select: {
+                    tagId: true
+                },
+                where: {
+                    ticketId: id
+                }
+            });
+
+            newTagsIds.forEach(e => {
+                e.id = e.tagId;
+                delete e.tagId;
+            });
 
             if (data.tags) {
-                tagsIds = await tx.tag.findMany({
+                newTagsIds = await tx.tag.findMany({
                     select: {
                         id: true
                     },
@@ -144,7 +158,7 @@ const updateTicket = async (id, data) => {
                         }
                     }
                 });
-            }
+            };
 
             const tickets = await tx.ticket.findMany({
                 where: {
@@ -177,16 +191,17 @@ const updateTicket = async (id, data) => {
                 }
             });
 
+            await tx.ticketTag.deleteMany({
+                where: {
+                    ticketId: {
+                        in: ticketsIds
+                    }
+                }
+            });
+
             for (let i = 0; i < (data.repetitions || tickets.length); i++) {
                 const date = _getShiftedDate(baseDate, i);
-
-                if(data.tags) {
-                    await tx.ticketTag.deleteMany({
-                        where: {
-                            ticketId: ticketsIds[i]
-                        }
-                    });
-                }
+                
 
                 if(i < ticketsIds.length) {
                     await tx.ticket.update({
@@ -196,9 +211,9 @@ const updateTicket = async (id, data) => {
                         data: {
                             value: data.value,
                             date: date,
-                            ticketTags: tagsIds ? {
+                            ticketTags: newTagsIds ? {
                                 createMany: {
-                                    data: tagsIds.map(e => {
+                                    data: newTagsIds.map(e => {
                                         return {
                                             tagId: e.id
                                         };
@@ -212,9 +227,9 @@ const updateTicket = async (id, data) => {
                         data: {
                             value: data.value || tickets[0].value,
                             date: date,
-                            ticketTags: tagsIds ? {
+                            ticketTags: newTagsIds ? {
                                 createMany: {
-                                    data: tagsIds.map(e => {
+                                    data: newTagsIds.map(e => {
                                         return {
                                             tagId: e.id
                                         };
@@ -317,7 +332,44 @@ const getSummary = async dateStart => {
     } catch(e) {
         return {status: "ERROR", message: e.message};
     }
-}
+};
+
+const getPanel = async year => {
+    try {
+        let dateStart = new Date(year, 0, 1);
+        let dateEnd = new Date(year, dateStart.getMonth() + 1, 0);
+        const panel = [];
+
+        for(let i = 0; i < 12; i++) {
+            const data = await getTickets({dateStart, dateEnd});
+            const tabs = {
+                INCOME: 0,
+                EXPENSE: 0,
+                CALL: 0,
+                TOTALCALL: panel.length ? panel[i - 1].TOTALCALL : 0,
+                TOTALBALANCE: panel.length ? panel[i - 1].TOTALBALANCE : 0,
+                MONTHBALANCE: 0
+            };
+            
+            data.data.forEach(e => {
+                tabs[e.action] += e.value;
+                tabs.MONTHBALANCE += (e.action === "INCOME" ? 1 : -1)  * e.value;
+            });
+
+            tabs.TOTALCALL += tabs.CALL;
+            tabs.TOTALBALANCE += tabs.MONTHBALANCE;
+
+            panel.push(tabs);
+            
+            dateStart = new Date(year, dateEnd.getMonth() + 1, 1);
+            dateEnd = new Date(year, dateStart.getMonth() + 1, 0);
+        }
+
+        return { status: "OK", data: panel};
+    } catch(e) {
+        return {status: "ERROR", message: e.message};
+    }
+};
 
 const _getShiftedDate = (start, rep) => {
     const date = new Date(start + ' 00:00:00.000');
@@ -337,5 +389,6 @@ module.exports = {
     deleteTicket,
     updateTicket,
     getBalance,
-    getSummary
+    getSummary,
+    getPanel
 }

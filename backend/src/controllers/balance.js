@@ -21,7 +21,14 @@ const getSummary = async (req, res) => {
     return res.status(500).json(answer);
 }
 
+const getPanel = async (req, res) => {
+    const answer = await model.getPanel(req.params.year);
+    if (answer.status === "OK") return res.status(200).json(answer);
+    return res.status(500).json(answer);
+}
+
 module.exports = {
     getBalance,
-    getSummary
+    getSummary,
+    getPanel
 };

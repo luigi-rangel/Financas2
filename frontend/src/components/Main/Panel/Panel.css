@@ -1,0 +1,9 @@
+.panel-body tr>td:nth-child(1) {
+    font-weight: 600;
+    text-align: left;
+}
+
+.panel-body tr td {
+    text-align: right;
+    min-width: 7em;
+}

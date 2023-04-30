@@ -16,6 +16,7 @@ router.get('/tickets', ticketController.getTickets);
 router.get('/tags', tagController.getTags);
 router.get('/balance', balanceController.getBalance);
 router.get('/summary/:month', balanceController.getSummary);
+router.get('/panel/:year', balanceController.getPanel);
 
 router.put('/ticket/:id', ticketController.updateTicket);
 

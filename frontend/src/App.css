@@ -1,6 +1,6 @@
 #app {
     display: grid;
-    grid-template-columns: 1fr auto 2fr;
+    grid-template-columns: 1fr 57vw 2fr;
 }
 
 h2 {

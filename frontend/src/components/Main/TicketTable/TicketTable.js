@@ -15,7 +15,7 @@ const monthDiff = (d1, d2) => {
   months += d1.getMonth();
   months -= d2.getMonth();
   return months < 0 ? 0 : months;
-}
+};
 
 const TicketTable = (props) => {
   const [date, setDate] = useState(
@@ -33,6 +33,8 @@ const TicketTable = (props) => {
   const createButton = useRef();
 
   const getTickets = () => {
+    props.setTickets([]);
+
     const dateEnd = new Date(
       props.dateStart.getFullYear(), 
       props.dateStart.getMonth() + 1,
@@ -98,8 +100,9 @@ const TicketTable = (props) => {
       <td>{formatter.format(item.value)}</td>
       <td>
         {
-          item.ticketTags.map(tag => tag.tag.name)
-          .reduce((acc, cur) => acc + ', ' + cur)
+          item.ticketTags.length ?
+            item.ticketTags.map(tag => tag.tag.name)
+            .reduce((acc, cur) => acc + ', ' + cur) : '-'
         }
       </td>
       <td>
@@ -141,6 +144,7 @@ const TicketTable = (props) => {
     } else if (newDate.getDate() > 28 && (props.dateStart.getMonth()) === 1) {
         newDate.setDate(28);
     }
+    newDate.setFullYear(props.dateStart.getFullYear());
     newDate.setMonth(props.dateStart.getMonth());
     setDate(newDate);
   }, [props.dateStart]);
@@ -169,11 +173,8 @@ const TicketTable = (props) => {
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className='ticket-table-body'>
           {props.tickets.map((item, ind) => {
-            const itemDate = new Date(item.date);
-            itemDate.setDate(itemDate.getDate() + 1);
-
             return (
               <tr key={ind}>
                 {processRow(item, item.id === editId)}
